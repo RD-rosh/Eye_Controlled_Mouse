@@ -10,6 +10,12 @@ if not cam.isOpened():
 face_mesh = mp.solutions.face_mesh.FaceMesh(refine_landmarks = True)
 
 screen_w, screen_h = pyautogui.size()
+
+#variable blink distance value
+blink_threshold = 0.02
+blink_counter = 0
+blink_detected = False
+
 while True:
     ret, frame = cam.read()
     if not ret:
@@ -42,6 +48,23 @@ while True:
             x = int(landmark.x * frame_w)
             y = int(landmark.y * frame_h)
             cv2.circle(frame, (x,y), 3, (0,255,255))
+
+        #calculate eye-y distance
+        y_difference = abs(left_eye[0].y -left_eye[1].y )
+        cv2.putText(frame, f"Y Difference : {y_difference:4f}", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+        #blink detection
+        if y_difference < blink_threshold:
+            blink_counter += 1
+        else:
+            blink_counter = 0
+
+        if blink_counter > 5 and not blink_detected:
+            pyautogui.click()
+            blink_detected = True
+            print('Blink detected! Mouse clicked')
+        elif y_difference > blink_threshold:
+            blink_detected = False
 
         if (left_eye[0].y - left_eye[1].y) < 0.004:
             pyautogui.click()
